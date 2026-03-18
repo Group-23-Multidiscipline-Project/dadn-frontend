@@ -1,4 +1,5 @@
-# Smart Agriculture Dashboard
+
+  # Smart Agriculture Dashboard
 
   This is a code bundle for Smart Agriculture Dashboard. The original project is available at https://www.figma.com/design/nQGekfk3RDqHNUWapmrLUS/Smart-Agriculture-Dashboard.
 
@@ -7,50 +8,4 @@
   Run `npm i` to install the dependencies.
 
   Run `npm run dev` to start the development server.
-
-### Docker support
-
-A `Dockerfile` and `docker-compose.yml` are provided for both development and production:
-
-- **Development**: mounts the source and runs the Vite dev server on port `5173`.
-- **Production**: builds static assets and serves them with nginx on port `80`.
-
-Build and run with Compose:
-
-```powershell
-# development (hot-reload)
-docker compose up dev
-
-# production build + serve
-docker compose up --build web
-```
-
-You can also build a standalone image:
-
-```powershell
-docker build -t dadn-dashboard .
-docker run --rm -p 8080:80 dadn-dashboard
-```
-
-## Docker Compose Configuration
-
-The `docker-compose.yml` file includes a service named `web` with the following configuration:
-
-```yaml
-services:
-  web:
-    image: myimage
-    deploy:                # chỉ hoạt động với chế độ swarm
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-
-    # với compose bình thường (không swarm) có thể dùng
-    # deploy: bỏ, thay bằng
-    #   cpus: '0.50'
-    #   mem_limit: 512M
-```
+  
