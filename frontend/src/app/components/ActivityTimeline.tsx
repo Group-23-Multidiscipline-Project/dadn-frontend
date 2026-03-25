@@ -1,4 +1,5 @@
 import { Droplet, CheckCircle, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface TimelineEvent {
   id: string;
@@ -9,29 +10,63 @@ interface TimelineEvent {
 }
 
 export function ActivityTimeline() {
-  const events: TimelineEvent[] = [
-    {
-      id: "1",
-      time: "14:00",
-      title: "Bật đầu tưới",
-      description: "Hệ thống kích hoạt bơm tự động do Độ ẩm thấp (18% < 20%).",
-      type: "start",
-    },
-    {
-      id: "2",
-      time: "14:15",
-      title: "Kết thúc tưới",
-      description: "Đã tưới đủ 15 phút. Độ ẩm đạt ngưỡng cần bằng.",
-      type: "complete",
-    },
-    {
-      id: "3",
-      time: "14:45",
-      title: "Kết thúc phục hồi",
-      description: "Trạng thái sinh trưởng ổn định, chuyển về chế độ Monitoring.",
-      type: "recovery",
-    },
-  ];
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const response = await fetch("/api/event-logs?deviceId=node_01&limit=20");
+        const data = await response.json();
+
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid response format");
+        }
+
+        const formattedEvents = data.map((log: any) => {
+          let type: "start" | "complete" | "recovery" = "complete";
+          let title = "Hoạt động";
+          let description = "";
+
+          if (log.action === "start_pump") {
+            type = "start";
+            title = "Bắt đầu tưới";
+            description = `Hệ thống bắt đầu tưới (Trigger: ${log.metadata?.trigger || 'N/A'}).`;
+          } else if (log.action === "stop_pump") {
+            if (log.state === "RECOVER") {
+              type = "recovery";
+              title = "Bắt đầu phục hồi";
+              description = "Bơm đã tắt, chờ đất ổn định.";
+            } else {
+              type = "complete";
+              title = "Kết thúc tưới";
+              description = "Đã tưới xong.";
+            }
+          } else if (log.state === "MONITOR") {
+            type = "complete";
+            title = "Monitoring";
+            description = "Trạng thái sinh trưởng ổn định, đang giám sát.";
+          }
+
+          return {
+            id: log._id || Math.random().toString(),
+            time: new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            title,
+            description,
+            type,
+          };
+        });
+
+        setEvents(formattedEvents);
+      } catch (error) {
+        console.error("Error fetching event logs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLogs();
+  }, []);
 
   const getIcon = (type: string) => {
     switch (type) {

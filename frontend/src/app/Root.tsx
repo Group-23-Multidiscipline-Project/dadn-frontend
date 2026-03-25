@@ -26,19 +26,20 @@ export default function Root() {
   const [sidebarActive, setSidebarActive] = useState("dashboard");
 
   // Sensor data
-  const [temperature, setTemperature] = useState(24.5);
-  const [humidity, setHumidity] = useState(62.0);
-  const [soilMoisture, setSoilMoisture] = useState(58.0);
-  const [lightLevel, setLightLevel] = useState(12400);
-  const [vitality, setVitality] = useState(92);
+  const initValue = 0;
+  const [temperature, setTemperature] = useState(initValue);
+  const [humidity, setHumidity] = useState(initValue);
+  const [soilMoisture, setSoilMoisture] = useState(initValue);
+  const [lightLevel, setLightLevel] = useState(initValue);
+  const [vitality, setVitality] = useState(initValue);
 
   // Chart data for 24h view
   const [chartData, setChartData] = useState<Array<{ time: string; humidity: number; light: number }>>(() => {
     const times = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"];
     return times.map((time) => ({
       time,
-      humidity: clamp(62 + (Math.random() - 0.5) * 30, 30, 90),
-      light: clamp(800 + Math.random() * 200, 600, 1000),
+      humidity: initValue,
+      light: initValue,
     }));
   });
 
@@ -47,11 +48,11 @@ export default function Root() {
   // Simulate real-time sensor updates
   useEffect(() => {
     const interval = setInterval(() => {
-      const newTemp = randomWalk(temperature, 0.3, 22, 28);
-      const newHum = randomWalk(humidity, 1.5, 40, 80);
-      const newSoil = randomWalk(soilMoisture, 0.5, 30, 70);
-      const newLight = randomWalk(lightLevel, 800, 5000, 15000);
-      const newVitality = randomWalk(vitality, 0.5, 85, 98);
+      const newTemp = initValue;
+      const newHum = initValue;
+      const newSoil = initValue;
+      const newLight = initValue;
+      const newVitality = initValue;
 
       setTemperature(newTemp);
       setHumidity(newHum);

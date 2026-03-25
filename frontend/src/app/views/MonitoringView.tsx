@@ -38,7 +38,7 @@ export function MonitoringView({
           <SystemStatusCard
             mode={mode}
             temperature={temperature}
-            remainingTime={mode === "watering" ? "12:45" : undefined}
+            remainingTime={mode === "watering" ? "0:00" : undefined}
           />
         </div>
 
