@@ -10,6 +10,9 @@ interface WateringViewProps {
   soilMoisture: number;
   lightLevel: number;
   lastUpdate: string;
+  deviceState?: string | null;
+  timeLabel?: string;
+  timeValue?: string;
 }
 
 export function WateringView({
@@ -18,6 +21,8 @@ export function WateringView({
   soilMoisture,
   lightLevel,
   lastUpdate,
+  timeLabel,
+  timeValue,
 }: WateringViewProps) {
   return (
     <div>
@@ -35,7 +40,8 @@ export function WateringView({
           <SystemStatusCard
             mode={mode}
             temperature={temperature}
-            remainingTime={mode === "watering" ? "12:45" : undefined}
+            timeLabel={timeLabel}
+            timeValue={timeValue}
           />
         </div>
 
