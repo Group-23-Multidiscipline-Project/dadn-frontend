@@ -10,16 +10,15 @@ export function RecoveringTimer({ isActive = true, remainingSeconds = 300, lastT
   const displaySeconds = isActive ? Math.max(0, remainingSeconds) : 0;
   const minutes = Math.floor(displaySeconds / 60);
   const remSec = displaySeconds % 60;
-  
+
   // Assume a 5-minute (300s) full circle for visual progress max
   const maxSeconds = 300;
   const progress = isActive ? ((maxSeconds - Math.min(displaySeconds, maxSeconds)) / maxSeconds) * 100 : 100;
 
   return (
     <div className="bg-white rounded-2xl p-8 border border-gray-200">
-      <div className={`inline-block px-3 py-1 text-xs font-medium rounded-lg mb-6 ${
-        isActive ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-700"
-      }`}>
+      <div className={`inline-block px-3 py-1 text-xs font-medium rounded-lg mb-6 ${isActive ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-700"
+        }`}>
         ● TRẠNG THÁI: {isActive ? "RECOVERING" : "NON-RECOVERING"}
       </div>
 
@@ -67,7 +66,7 @@ export function RecoveringTimer({ isActive = true, remainingSeconds = 300, lastT
       ) : (
         <div className="flex flex-col items-center justify-center py-8">
           <Hourglass size={48} className="text-gray-300 mb-4" />
-          <div className="text-lg font-medium text-gray-700">Lần cuối recovering:</div>
+          <div className="text-lg font-medium text-gray-700">Last recovering:</div>
           <div className="text-xl font-bold text-gray-900 mt-1">{lastTime || "N/A"}</div>
         </div>
       )}

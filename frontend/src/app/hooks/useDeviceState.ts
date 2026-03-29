@@ -8,22 +8,30 @@ export interface DeviceStateData {
 }
 
 export function useDeviceState(deviceId: string): DeviceStateData {
-  const [currentState, setCurrentState] = useState<string | null>(null);
-  const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
-  const [lastTimes, setLastTimes] = useState<Record<string, string | null>>({
-    MONITOR: null,
-    WATERING: null,
-    RECOVER: null,
+  // Dùng 1 object duy nhất lưu toàn bộ state để tối ưu re-render
+  const [deviceState, setDeviceState] = useState<DeviceStateData>({
+    currentState: null,
+    remainingSeconds: 0,
+    lastTimes: {
+      MONITOR: null,
+      WATERING: null,
+      RECOVER: null,
+    },
+    loading: true,
   });
-  const [loading, setLoading] = useState(true);
 
-  // Fetch the last time an inactive state occurred
   const fetchLastTime = async (stateName: string) => {
     try {
-      const logRes = await fetch(`/api/event-logs?deviceId=${deviceId}&state=${stateName}&limit=1`);
+      // Bỏ query t= vì backend chặn param lạ (400 Bad Request), dùng header điều hướng cache thay thế
+      const logRes = await fetch(`/api/event-logs?deviceId=${deviceId}&state=${stateName}&limit=1`, {
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
       const logs = await logRes.json();
       if (logs && logs.length > 0) {
-        setLastTimes(prev => ({ ...prev, [stateName]: logs[0].timestamp }));
+        setDeviceState(prev => ({
+          ...prev,
+          lastTimes: { ...prev.lastTimes, [stateName]: logs[0].timestamp }
+        }));
       }
     } catch (e) {
       console.error(`Failed to fetch last time for ${stateName}:`, e);
@@ -35,28 +43,45 @@ export function useDeviceState(deviceId: string): DeviceStateData {
 
     const fetchState = async () => {
       try {
-        const res = await fetch(`/api/state/${deviceId}`);
+        const res = await fetch(`/api/state/${deviceId}`, {
+          headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+        });
         const data = await res.json();
         
-        setCurrentState(prev => {
-          // If the state just changed, record the current time as the "last time" for the previous state.
-          // This avoids an extra API call.
-          if (prev && prev !== data.state) {
-            setLastTimes(lt => ({ ...lt, [prev]: new Date().toISOString() }));
+        setDeviceState(prev => {
+          let newLastTimes = { ...prev.lastTimes };
+          
+          // Kiểm tra nếu trạng thái thay đổi
+          if (prev.currentState && prev.currentState !== data.state) {
+            newLastTimes[prev.currentState] = new Date().toISOString();
           }
-          return data.state;
-        });
-        
-        setRemainingSeconds(data.remainingSeconds || 0);
 
-        // Smart polling: fast when active (3s), slow when idle (30s)
+          const newRemaining = data.remainingSeconds || 0;
+
+          // SO SÁNH: Chỉ tạo ra object mới (kích hoạt hook re-render) NẾU giá trị polling lấy về khác giá trị cũ
+          if (
+            prev.currentState !== data.state || 
+            prev.remainingSeconds !== newRemaining ||
+            prev.loading // Lần đầu tiên load xong cũng render 1 lần
+          ) {
+            return {
+              ...prev,
+              currentState: data.state,
+              remainingSeconds: newRemaining,
+              lastTimes: prev.currentState !== data.state ? newLastTimes : prev.lastTimes,
+              loading: false,
+            };
+          }
+
+          // Trả về prev cũ (bỏ qua không re-render màn hình) nếu chẳng có gì thay đổi
+          return prev;
+        });
+
         const isIdle = data.state === "MONITOR";
         timeoutId = window.setTimeout(fetchState, isIdle ? 30000 : 3000);
       } catch (e) {
         console.error("Failed to fetch device state:", e);
         timeoutId = window.setTimeout(fetchState, 30000);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -64,28 +89,28 @@ export function useDeviceState(deviceId: string): DeviceStateData {
     return () => window.clearTimeout(timeoutId);
   }, [deviceId]);
 
-  // Local physical countdown for a smooth real-time timer
+  // Bộ đếm đếm ngược siêu mượt
   useEffect(() => {
     const timer = setInterval(() => {
-      setRemainingSeconds(prev => (prev > 0 ? prev - 1 : 0));
+      setDeviceState(prev => {
+        if (prev.remainingSeconds > 0) {
+          return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
+        }
+        return prev;
+      });
     }, 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Make sure we have the historical last times for any states that currently aren't active
+  // Kéo dữ liệu lịch sử nếu thiếu
   useEffect(() => {
+    const { currentState, lastTimes } = deviceState;
     if (currentState) {
-      if (currentState !== "MONITOR" && !lastTimes["MONITOR"]) {
-        fetchLastTime("MONITOR");
-      }
-      if (currentState !== "WATERING" && !lastTimes["WATERING"]) {
-        fetchLastTime("WATERING");
-      }
-      if (currentState !== "RECOVER" && !lastTimes["RECOVER"]) {
-        fetchLastTime("RECOVER");
-      }
+      if (currentState !== "MONITOR" && !lastTimes["MONITOR"]) fetchLastTime("MONITOR");
+      if (currentState !== "WATERING" && !lastTimes["WATERING"]) fetchLastTime("WATERING");
+      if (currentState !== "RECOVER" && !lastTimes["RECOVER"]) fetchLastTime("RECOVER");
     }
-  }, [currentState, lastTimes, deviceId]);
+  }, [deviceState.currentState, deviceState.lastTimes, deviceId]);
 
-  return { currentState, remainingSeconds, lastTimes, loading };
+  return deviceState;
 }
