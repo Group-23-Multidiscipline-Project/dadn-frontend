@@ -31,7 +31,7 @@ export function LogView({ chartData, humidity, lightLevel, soilMoisture }: LogVi
             </div>
             <div>
               <div className="text-xs text-gray-500 mb-1">ÁNH SÁNG</div>
-              <div className="text-2xl font-bold text-gray-900">{lightLevel.toFixed(2)} lx</div>
+              <div className="text-2xl font-bold text-gray-900">{lightLevel.toFixed(2)}%</div>
             </div>
           </div>
         </div>

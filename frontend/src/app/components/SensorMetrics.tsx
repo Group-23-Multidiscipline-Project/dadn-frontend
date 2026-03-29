@@ -23,7 +23,7 @@ export function SensorMetrics({ humidity, lightLevel }: SensorMetricsProps) {
           <Sun size={24} className="text-white" />
         </div>
         <div className="text-xs text-emerald-700 mb-1">ÁNH SÁNG TB</div>
-        <div className="text-2xl font-bold text-gray-900">{lightLevel.toFixed(2)} lx</div>
+        <div className="text-2xl font-bold text-gray-900">{lightLevel.toFixed(2)}%</div>
       </div>
     </div>
   );

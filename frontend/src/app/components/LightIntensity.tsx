@@ -23,7 +23,7 @@ export function LightIntensity({ value, avgComparison = 12 }: LightIntensityProp
 
       <div className="mb-4">
         <div className="text-xs text-gray-500 mb-1">LUMINOUS INTENSITY</div>
-        <div className="text-3xl font-bold text-gray-900">{value.toFixed(2)} <span className="text-lg text-gray-500">lux</span></div>
+        <div className="text-3xl font-bold text-gray-900">{value.toFixed(2)} <span className="text-lg text-gray-500">%</span></div>
       </div>
 
       <div className="mb-6">

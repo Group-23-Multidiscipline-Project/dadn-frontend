@@ -42,6 +42,10 @@ export function ActivityTimeline() {
               title = "Kết thúc tưới";
               description = "Đã tưới xong.";
             }
+          } else if (log.state === "RECOVER") {
+            type = "recovery";
+            title = "Phục hồi";
+            description = "Hệ thống đang trong trạng thái phục hồi, chờ đất ổn định.";
           } else if (log.state === "MONITOR") {
             type = "complete";
             title = "Monitoring";
