@@ -79,7 +79,7 @@ export default function Root() {
   }, [temperature, humidity, soilMoisture, lightLevel, vitality]);
 
   // Hook for API real-time states
-  const { currentState, remainingSeconds, lastTimes } = useDeviceState("device_01");
+  const { currentState, remainingSeconds, lastTimes } = useDeviceState("node_01");
 
   return (
     <div className="flex h-screen bg-gray-100">

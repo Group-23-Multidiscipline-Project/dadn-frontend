@@ -31,6 +31,8 @@ export function useDeviceState(deviceId: string): DeviceStateData {
   };
 
   useEffect(() => {
+    let timeoutId: number;
+
     const fetchState = async () => {
       try {
         const res = await fetch(`/api/state/${deviceId}`);
@@ -46,17 +48,29 @@ export function useDeviceState(deviceId: string): DeviceStateData {
         });
         
         setRemainingSeconds(data.remainingSeconds || 0);
+
+        // Smart polling: fast when active (3s), slow when idle (30s)
+        const isIdle = data.state === "MONITOR";
+        timeoutId = window.setTimeout(fetchState, isIdle ? 30000 : 3000);
       } catch (e) {
         console.error("Failed to fetch device state:", e);
+        timeoutId = window.setTimeout(fetchState, 30000);
       } finally {
         setLoading(false);
       }
     };
 
     fetchState();
-    const interval = setInterval(fetchState, 30000); // Poll every 30 seconds
-    return () => clearInterval(interval);
+    return () => window.clearTimeout(timeoutId);
   }, [deviceId]);
+
+  // Local physical countdown for a smooth real-time timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRemainingSeconds(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Make sure we have the historical last times for any states that currently aren't active
   useEffect(() => {
