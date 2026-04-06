@@ -5,11 +5,12 @@ import { SensorMetrics } from "../components/SensorMetrics";
 interface LogViewProps {
   chartData: Array<{ time: string; humidity: number; light: number }>;
   humidity: number;
-  lightLevel: number;
+  lightLevel: number; // Current light level
+  avgLight: number;   // Average light level
   soilMoisture: number;
 }
 
-export function LogView({ chartData, humidity, lightLevel, soilMoisture }: LogViewProps) {
+export function LogView({ chartData, humidity, lightLevel, avgLight, soilMoisture }: LogViewProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Left column */}
@@ -36,7 +37,7 @@ export function LogView({ chartData, humidity, lightLevel, soilMoisture }: LogVi
           </div>
         </div>
         
-        <SensorMetrics humidity={humidity} lightLevel={lightLevel} />
+        <SensorMetrics humidity={humidity} lightLevel={avgLight} />
       </div>
     </div>
   );

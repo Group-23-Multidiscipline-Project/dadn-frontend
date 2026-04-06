@@ -66,7 +66,7 @@ export function SoilHydrationGauge({ value, min = 30, max = 60 }: SoilHydrationG
         <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shrink-0">
           <TrendingUp size={16} className="text-white" />
         </div>
-        <span className="text-xs text-emerald-700 font-medium">+12% sau tưới</span>
+        {/* <span className="text-xs text-emerald-700 font-medium">+12% sau tưới</span> */}
       </div>
 
       <div className="mt-4 pt-4 border-t border-gray-200">
