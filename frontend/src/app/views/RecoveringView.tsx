@@ -42,7 +42,7 @@ export function RecoveringView({
           <SystemStatusCard 
             mode="recovering"
             temperature={temperature}
-            timeLabel={isRecovering ? "TIME REMAINING" : "LẦN CUỐI RECOVERING"}
+            timeLabel={isRecovering ? "TIME REMAINING" : "LAST RECOVER"}
             timeValue={isRecovering 
               ? `Remaining: ${Math.floor((remainingSeconds || 0) / 60).toString().padStart(2, '0')}:${((remainingSeconds || 0) % 60).toString().padStart(2, '0')}` 
               : lastRecoverTime || "N/A"}
