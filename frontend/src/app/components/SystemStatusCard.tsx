@@ -11,8 +11,7 @@ export function SystemStatusCard({ mode, temperature, timeLabel, timeValue }: Sy
   const isWatering = mode === "watering";
   const isRecovering = mode === "recovering";
 
-  let bgClass = "bg-gradient-to-br from-emerald-50 to-green-50 text-gray-900 border border-emerald-200";
-  let bgStyle = undefined;
+  let bgClass = "bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200";
   let badgeClass = "bg-emerald-500 text-white";
   let title = "MONITORING";
   let desc = "The greenhouse environment is currently optimal. All biological parameters are within the healthy threshold.";
@@ -20,7 +19,7 @@ export function SystemStatusCard({ mode, temperature, timeLabel, timeValue }: Sy
   let pulseClass = "bg-emerald-500";
   let opMode = "Automatic Eco-Growth";
   let dotClass = "bg-gray-400";
-
+  
   if (isWatering) {
     bgClass = "bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200";
     badgeClass = "bg-blue-500 text-white";
