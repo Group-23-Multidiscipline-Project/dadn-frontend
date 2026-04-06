@@ -62,18 +62,18 @@ export function SoilHydrationGauge({ value, min = 30, max = 60 }: SoilHydrationG
         </div>
       </div>
 
-      <div className="mt-4 p-3 bg-emerald-50 rounded-xl flex items-center gap-2">
+      {/* <div className="mt-4 p-3 bg-emerald-50 rounded-xl flex items-center gap-2">
         <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shrink-0">
           <TrendingUp size={16} className="text-white" />
         </div>
-        {/* <span className="text-xs text-emerald-700 font-medium">+12% sau tưới</span> */}
-      </div>
+        <span className="text-xs text-emerald-700 font-medium">+12% sau tưới</span>
+      </div> */}
 
-      <div className="mt-4 pt-4 border-t border-gray-200">
+      {/* <div className="mt-4 pt-4 border-t border-gray-200">
         <p className="text-xs text-gray-500 leading-relaxed">
           Mức độ ẩm hiện tại đạt ngưỡng tối ưu sau chu kỳ tưới.
         </p>
-      </div>
+      </div> */}
     </div>
   );
 }
