@@ -116,7 +116,7 @@ export function SensorCards({ humidity, temperature, soilMoisture, lightLevel }:
     {
       title: "Light Level",
       value: lightLevel,
-      unit: " lux",
+      unit: "%",
       icon: <Sun size={16} />,
       color: "text-yellow-400",
       bgColor: "bg-yellow-900/30",
