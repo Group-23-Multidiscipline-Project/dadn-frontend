@@ -1,4 +1,4 @@
-import { RecoveringTimer } from "../components/RecoveringTimer";
+import { SystemStatusCard } from "../components/SystemStatusCard";
 import { SoilHydrationGauge } from "../components/SoilHydrationGauge";
 import { LightIntensity } from "../components/LightIntensity";
 import { VitalityChart } from "../components/VitalityChart";
@@ -9,9 +9,22 @@ interface RecoveringViewProps {
   lightLevel: number;
   vitality: number;
   lastUpdate: string;
+  temperature: number;
+  isRecovering?: boolean;
+  remainingSeconds?: number;
+  lastRecoverTime?: string | null;
 }
 
-export function RecoveringView({ soilMoisture, lightLevel, vitality, lastUpdate }: RecoveringViewProps) {
+export function RecoveringView({ 
+  soilMoisture, 
+  lightLevel, 
+  vitality, 
+  lastUpdate,
+  temperature,
+  isRecovering,
+  remainingSeconds,
+  lastRecoverTime
+}: RecoveringViewProps) {
   return (
     <div>
       {/* Update indicator */}
@@ -24,8 +37,16 @@ export function RecoveringView({ soilMoisture, lightLevel, vitality, lastUpdate 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recovering Timer - spans 2 columns */}
+        {/* System status - spans 2 columns */}
         <div className="lg:col-span-2">
-          <RecoveringTimer />
+          <SystemStatusCard 
+            mode="recovering"
+            temperature={temperature}
+            timeLabel={isRecovering ? "TIME REMAINING" : "LAST RECOVER"}
+            timeValue={isRecovering 
+              ? `Remaining: ${Math.floor((remainingSeconds || 0) / 60).toString().padStart(2, '0')}:${((remainingSeconds || 0) % 60).toString().padStart(2, '0')}` 
+              : lastRecoverTime || "N/A"}
+          />
         </div>
 
         {/* Soil hydration */}

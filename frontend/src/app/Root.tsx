@@ -5,11 +5,22 @@ import { MonitoringView } from "./views/MonitoringView";
 import { RecoveringView } from "./views/RecoveringView";
 import { WateringView } from "./views/WateringView";
 import { LogView } from "./views/LogView";
+import { useDeviceState } from "./hooks/useDeviceState";
 
 // Helper functions
 
 function formatTime(date: Date) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function safeFormatTime(iso: string | null) {
+  return iso ? formatTime(new Date(iso)) : "N/A";
+}
+
+function formatRemaining(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
 export default function Root() {
@@ -86,13 +97,13 @@ export default function Root() {
     return () => clearInterval(interval);
   }, []);
 
-  // Determine watering mode based on soil moisture
-  const wateringMode: "watering" | "monitoring" = soilMoisture < 45 ? "watering" : "monitoring";
+  // Hook for API real-time states
+  const { currentState, remainingSeconds, lastTimes } = useDeviceState("node_01");
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar 
-        activeItem={sidebarActive} 
+      <Sidebar
+        activeItem={sidebarActive}
         onItemClick={(item) => {
           setSidebarActive(item);
           if (item === "logs") {
@@ -100,7 +111,7 @@ export default function Root() {
           } else {
             setShowLog(false);
           }
-        }} 
+        }}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -129,7 +140,7 @@ export default function Root() {
             <>
               {selectedTab === "monitoring" && (
                 <MonitoringView
-                  mode={wateringMode}
+                  mode="monitoring"
                   temperature={temperature}
                   soilMoisture={soilMoisture}
                   lightLevel={lightLevel}
@@ -137,25 +148,39 @@ export default function Root() {
                   chartData={chartData}
                   humidity={avgMoisture}
                   vitality={vitality}
+                  deviceState={currentState}
+                  timeLabel={currentState === "MONITOR" ? "REMAINING TIME" : "LAST MONITORING"}
+                  timeValue={currentState === "MONITOR"
+                    ? `Remaining: ${formatRemaining(remainingSeconds)}`
+                    : safeFormatTime(lastTimes["MONITOR"])}
                 />
               )}
 
               {selectedTab === "watering" && (
                 <WateringView
-                  mode={wateringMode}
+                  mode="watering"
                   temperature={temperature}
                   soilMoisture={soilMoisture}
                   lightLevel={lightLevel}
                   lastUpdate={lastUpdate}
+                  deviceState={currentState}
+                  timeLabel={currentState === "WATERING" ? "TIME REMAINING" : "LAST WATERING"}
+                  timeValue={currentState === "WATERING" 
+                    ? `Remaining: ${formatRemaining(remainingSeconds)}`
+                    : safeFormatTime(lastTimes["WATERING"])}
                 />
               )}
 
               {selectedTab === "recovering" && (
                 <RecoveringView
+                  temperature={temperature}
                   soilMoisture={soilMoisture}
                   lightLevel={lightLevel}
                   vitality={vitality}
                   lastUpdate={lastUpdate}
+                  isRecovering={currentState === "RECOVER"}
+                  remainingSeconds={remainingSeconds}
+                  lastRecoverTime={safeFormatTime(lastTimes["RECOVER"])}
                 />
               )}
             </>
