@@ -48,7 +48,7 @@ export function WateringView({
       {/* Bottom row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <LightIntensity value={lightLevel} avgComparison={12} />
-        <EmergencyPumpControl />
+        {/* <EmergencyPumpControl /> */}
       </div>
     </div>
   );

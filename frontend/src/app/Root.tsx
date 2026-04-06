@@ -7,13 +7,6 @@ import { WateringView } from "./views/WateringView";
 import { LogView } from "./views/LogView";
 
 // Helper functions
-function clamp(val: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, val));
-}
-
-function randomWalk(current: number, step: number, min: number, max: number) {
-  return clamp(current + (Math.random() - 0.5) * step * 2, min, max);
-}
 
 function formatTime(date: Date) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -26,45 +19,72 @@ export default function Root() {
   const [sidebarActive, setSidebarActive] = useState("dashboard");
 
   // Sensor data
-  const [temperature, setTemperature] = useState(24.5);
-  const [humidity, setHumidity] = useState(62.0);
-  const [soilMoisture, setSoilMoisture] = useState(58.0);
-  const [lightLevel, setLightLevel] = useState(12400);
-  const [vitality, setVitality] = useState(92);
+  const [temperature, setTemperature] = useState(0);
+  const [humidity, setHumidity] = useState(0);
+  const [soilMoisture, setSoilMoisture] = useState(0);
+  const [lightLevel, setLightLevel] = useState(0);
+  const [vitality, setVitality] = useState(0); // If you have a real API for vitality/temp, it goes here
 
-  // Chart data for 24h view
-  const [chartData, setChartData] = useState<Array<{ time: string; humidity: number; light: number }>>(() => {
-    const times = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"];
-    return times.map((time) => ({
-      time,
-      humidity: clamp(62 + (Math.random() - 0.5) * 30, 30, 90),
-      light: clamp(800 + Math.random() * 200, 600, 1000),
-    }));
-  });
+  // Chart data for historical view
+  const [chartData, setChartData] = useState<Array<{ time: string; humidity: number; light: number }>>([]);
 
-  const [lastUpdate, setLastUpdate] = useState("2 mins ago");
+  const [lastUpdate, setLastUpdate] = useState("Waiting for data...");
 
-  // Simulate real-time sensor updates
+  // Average sensor data from last 20 polls
+  const [avgMoisture, setAvgMoisture] = useState(0);
+  const [avgLight, setAvgLight] = useState(0);
+
+  // Poll real-time sensor updates every 5 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newTemp = randomWalk(temperature, 0.3, 22, 28);
-      const newHum = randomWalk(humidity, 1.5, 40, 80);
-      const newSoil = randomWalk(soilMoisture, 0.5, 30, 70);
-      const newLight = randomWalk(lightLevel, 800, 5000, 15000);
-      const newVitality = randomWalk(vitality, 0.5, 85, 98);
+    const fetchSensorData = async () => {
+      try {
+        const response = await fetch("/api/event-logs?limit=100");
+        const data = await response.json();
 
-      setTemperature(newTemp);
-      setHumidity(newHum);
-      setSoilMoisture(newSoil);
-      setLightLevel(newLight);
-      setVitality(newVitality);
+        // Filter events that have sensor data (moisture or humidity, and light)
+        const sensorLogs = data.filter((log: any) => 
+          (log.moisture !== undefined || log.humidity !== undefined) && log.light !== undefined
+        );
+        
+        // We need exactly the 20 most recent polls for the average
+        const recent20 = sensorLogs.slice(0, 20);
 
-      // Update last update time
-      setLastUpdate("2 mins ago");
-    }, 2000);
+        if (recent20.length > 0) {
+          // Current values
+          const currentLog = recent20[0];
+          const currentMoisture = currentLog.moisture !== undefined ? currentLog.moisture : currentLog.humidity;
+
+          setSoilMoisture(currentMoisture);
+          setLightLevel(currentLog.light);
+          setHumidity(currentMoisture); // Fallback
+
+          // Calculate averages of last 20 polls
+          const totalMoisture = recent20.reduce((acc: number, curr: any) => acc + (curr.moisture !== undefined ? curr.moisture : curr.humidity), 0);
+          const totalLight = recent20.reduce((acc: number, curr: any) => acc + curr.light, 0);
+          
+          setAvgMoisture(totalMoisture / recent20.length);
+          setAvgLight(totalLight / recent20.length);
+          
+          setLastUpdate(formatTime(new Date()));
+
+          // Update chart data from latest logs (chronological order)
+          const newChartData = recent20.reverse().map((log: any) => ({
+            time: formatTime(new Date(log.timestamp || log.createdAt)),
+            humidity: log.moisture !== undefined ? log.moisture : log.humidity,
+            light: log.light
+          }));
+          setChartData(newChartData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch sensor data", error);
+      }
+    };
+
+    fetchSensorData(); // Initial fetch
+    const interval = setInterval(fetchSensorData, 5000);
 
     return () => clearInterval(interval);
-  }, [temperature, humidity, soilMoisture, lightLevel, vitality]);
+  }, []);
 
   // Determine watering mode based on soil moisture
   const wateringMode: "watering" | "monitoring" = soilMoisture < 45 ? "watering" : "monitoring";
@@ -100,9 +120,10 @@ export default function Root() {
           {sidebarActive === "logs" ? (
             <LogView
               chartData={chartData}
-              humidity={humidity}
+              humidity={avgMoisture}
               soilMoisture={soilMoisture}
               lightLevel={lightLevel}
+              avgLight={avgLight}
             />
           ) : (
             <>
@@ -114,7 +135,7 @@ export default function Root() {
                   lightLevel={lightLevel}
                   lastUpdate={lastUpdate}
                   chartData={chartData}
-                  humidity={humidity}
+                  humidity={avgMoisture}
                   vitality={vitality}
                 />
               )}
