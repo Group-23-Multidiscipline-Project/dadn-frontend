@@ -13,6 +13,9 @@ interface MonitoringViewProps {
   temperature: number;
   soilMoisture: number;
   lastUpdate: string;
+  deviceState?: string | null;
+  timeLabel?: string;
+  timeValue?: string;
 }
 
 export function MonitoringView({ 
@@ -21,6 +24,8 @@ export function MonitoringView({
   soilMoisture,
   lightLevel,
   lastUpdate,
+  timeLabel,
+  timeValue,
 }: MonitoringViewProps) {
   return (
     <div>
@@ -38,7 +43,8 @@ export function MonitoringView({
           <SystemStatusCard
             mode={mode}
             temperature={temperature}
-            remainingTime={mode === "watering" ? "12:45" : undefined}
+            timeLabel={timeLabel}
+            timeValue={timeValue}
           />
         </div>
 

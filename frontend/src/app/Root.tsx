@@ -5,6 +5,7 @@ import { MonitoringView } from "./views/MonitoringView";
 import { RecoveringView } from "./views/RecoveringView";
 import { WateringView } from "./views/WateringView";
 import { LogView } from "./views/LogView";
+import { useDeviceState } from "./hooks/useDeviceState";
 
 // Helper functions
 function clamp(val: number, min: number, max: number) {
@@ -19,6 +20,16 @@ function formatTime(date: Date) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function safeFormatTime(iso: string | null) {
+  return iso ? formatTime(new Date(iso)) : "N/A";
+}
+
+function formatRemaining(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 export default function Root() {
   // Tab state
   const [selectedTab, setSelectedTab] = useState<"monitoring" | "watering" | "recovering">("monitoring");
@@ -26,19 +37,20 @@ export default function Root() {
   const [sidebarActive, setSidebarActive] = useState("dashboard");
 
   // Sensor data
-  const [temperature, setTemperature] = useState(24.5);
-  const [humidity, setHumidity] = useState(62.0);
-  const [soilMoisture, setSoilMoisture] = useState(58.0);
-  const [lightLevel, setLightLevel] = useState(12400);
-  const [vitality, setVitality] = useState(92);
+  const initValue = 0;
+  const [temperature, setTemperature] = useState(initValue);
+  const [humidity, setHumidity] = useState(initValue);
+  const [soilMoisture, setSoilMoisture] = useState(initValue);
+  const [lightLevel, setLightLevel] = useState(initValue);
+  const [vitality, setVitality] = useState(initValue);
 
   // Chart data for 24h view
   const [chartData, setChartData] = useState<Array<{ time: string; humidity: number; light: number }>>(() => {
     const times = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"];
     return times.map((time) => ({
       time,
-      humidity: clamp(62 + (Math.random() - 0.5) * 30, 30, 90),
-      light: clamp(800 + Math.random() * 200, 600, 1000),
+      humidity: initValue,
+      light: initValue,
     }));
   });
 
@@ -47,11 +59,11 @@ export default function Root() {
   // Simulate real-time sensor updates
   useEffect(() => {
     const interval = setInterval(() => {
-      const newTemp = randomWalk(temperature, 0.3, 22, 28);
-      const newHum = randomWalk(humidity, 1.5, 40, 80);
-      const newSoil = randomWalk(soilMoisture, 0.5, 30, 70);
-      const newLight = randomWalk(lightLevel, 800, 5000, 15000);
-      const newVitality = randomWalk(vitality, 0.5, 85, 98);
+      const newTemp = initValue;
+      const newHum = initValue;
+      const newSoil = initValue;
+      const newLight = initValue;
+      const newVitality = initValue;
 
       setTemperature(newTemp);
       setHumidity(newHum);
@@ -66,13 +78,13 @@ export default function Root() {
     return () => clearInterval(interval);
   }, [temperature, humidity, soilMoisture, lightLevel, vitality]);
 
-  // Determine watering mode based on soil moisture
-  const wateringMode: "watering" | "monitoring" = soilMoisture < 45 ? "watering" : "monitoring";
+  // Hook for API real-time states
+  const { currentState, remainingSeconds, lastTimes } = useDeviceState("node_01");
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar 
-        activeItem={sidebarActive} 
+      <Sidebar
+        activeItem={sidebarActive}
         onItemClick={(item) => {
           setSidebarActive(item);
           if (item === "logs") {
@@ -80,7 +92,7 @@ export default function Root() {
           } else {
             setShowLog(false);
           }
-        }} 
+        }}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -108,7 +120,7 @@ export default function Root() {
             <>
               {selectedTab === "monitoring" && (
                 <MonitoringView
-                  mode={wateringMode}
+                  mode="monitoring"
                   temperature={temperature}
                   soilMoisture={soilMoisture}
                   lightLevel={lightLevel}
@@ -116,25 +128,39 @@ export default function Root() {
                   chartData={chartData}
                   humidity={humidity}
                   vitality={vitality}
+                  deviceState={currentState}
+                  timeLabel={currentState === "MONITOR" ? "REMAINING TIME" : "LAST MONITORING"}
+                  timeValue={currentState === "MONITOR"
+                    ? `Remaining: ${formatRemaining(remainingSeconds)}`
+                    : safeFormatTime(lastTimes["MONITOR"])}
                 />
               )}
 
               {selectedTab === "watering" && (
                 <WateringView
-                  mode={wateringMode}
+                  mode="watering"
                   temperature={temperature}
                   soilMoisture={soilMoisture}
                   lightLevel={lightLevel}
                   lastUpdate={lastUpdate}
+                  deviceState={currentState}
+                  timeLabel={currentState === "WATERING" ? "TIME REMAINING" : "LAST WATERING"}
+                  timeValue={currentState === "WATERING" 
+                    ? `Remaining: ${formatRemaining(remainingSeconds)}`
+                    : safeFormatTime(lastTimes["WATERING"])}
                 />
               )}
 
               {selectedTab === "recovering" && (
                 <RecoveringView
+                  temperature={temperature}
                   soilMoisture={soilMoisture}
                   lightLevel={lightLevel}
                   vitality={vitality}
                   lastUpdate={lastUpdate}
+                  isRecovering={currentState === "RECOVER"}
+                  remainingSeconds={remainingSeconds}
+                  lastRecoverTime={safeFormatTime(lastTimes["RECOVER"])}
                 />
               )}
             </>
